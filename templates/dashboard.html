@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hector Beverages | Revenue Performance Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #0066FF;
+      --primary-dark: #0052CC;
+      --primary-light: #E6F0FF;
+      --secondary: #00C853;
+      --secondary-light: #E8F5E9;
+      --accent: #FF6D00;
+      --accent-light: #FFF3E0;
+      --danger: #FF1744;
+      --danger-light: #FFEBEE;
+      --warning: #FFC400;
+      --warning-light: #FFF8E1;
+      --success: #00C853;
+      --purple: #7C3AED;
+      --purple-light: #EDE9FE;
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --surface-elevated: #FFFFFF;
+      --text-primary: #1A202C;
+      --text-secondary: #4A5568;
+      --text-tertiary: #718096;
+      --border: #E2E8F0;
+      --border-light: #EDF2F7;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --primary: #3B82F6;
+      --primary-dark: #2563EB;
+      --primary-light: #1E3A5F;
+      --secondary: #10B981;
+      --secondary-light: #064E3B;
+      --accent: #F59E0B;
+      --accent-light: #78350F;
+      --purple: #A78BFA;
+      --purple-light: #4C1D95;
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --surface-elevated: #334155;
+      --text-primary: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-tertiary: #94A3B8;
+      --border: #334155;
+      --border-light: #475569;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow-xl);
+    }
+    .header-content {
+      max-width: 1800px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; backdrop-filter: blur(10px); }
+    .brand-text h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+    .brand-text span { font-size: 13px; opacity: 0.9; font-weight: 500; }
+    .header-actions { display: flex; align-items: center; gap: 16px; }
+    .live-badge { display: flex; align-items: center; gap: 6px; background: rgba(0,200,83,0.2); padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(0,200,83,0.3); }
+    .live-dot { width: 8px; height: 8px; background: var(--secondary); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .theme-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: var(--transition); }
+    .theme-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 70px;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .filter-bar-content { max-width: 1800px; margin: 0 auto; }
+    
+    .filter-section { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .filter-section:last-child { margin-bottom: 0; }
+    .filter-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+    
+    .filter-dropdown { position: relative; }
+    .filter-btn {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .filter-btn:hover, .filter-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .filter-btn i { font-size: 14px; }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-xl);
+      padding: 20px;
+      min-width: 300px;
+      z-index: 1000;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+    .dropdown-content.show { display: block; }
+    .dropdown-content.wide { min-width: 400px; }
+    
+    .dropdown-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--border-light); }
+    .dropdown-title { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .dropdown-close { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 18px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+    .dropdown-close:hover { background: var(--danger-light); color: var(--danger); }
+    
+    .dropdown-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+    .action-btn { flex: 1; padding: 8px 12px; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-secondary); transition: var(--transition); }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    
+    .dropdown-select, .dropdown-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-primary); font-size: 14px; font-weight: 500; transition: var(--transition); }
+    .dropdown-select:focus, .dropdown-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+    .dropdown-select[multiple] { height: 180px; }
+    
+    /* Year Chips */
+    .year-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .year-chip {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+    }
+    .year-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .year-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    /* Time Grain Selector */
+    .grain-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .grain-option {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .grain-option:hover { border-color: var(--primary); color: var(--primary); }
+    .grain-option.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    /* Toggle Switch */
+    .toggle-wrapper { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .toggle-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+    .toggle { width: 48px; height: 26px; background: var(--border); border-radius: 13px; position: relative; cursor: pointer; transition: var(--transition); }
+    .toggle.active { background: var(--primary); }
+    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: var(--transition); box-shadow: var(--shadow); }
+    .toggle.active::after { transform: translateX(22px); }
+    
+    /* Apply Button */
+    .apply-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(0,102,255,0.4);
+    }
+    .apply-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,102,255,0.5); }
+    
+    /* Clear Button */
+    .clear-btn {
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 2px solid var(--danger);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .clear-btn:hover { background: var(--danger); color: white; }
+
+    /* Main Content */
+    .main-content { max-width: 1800px; margin: 0 auto; padding: 28px 24px; }
+
+    /* KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 28px; }
+    .kpi-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+    .kpi-card.positive::before { background: linear-gradient(90deg, var(--secondary) 0%, #00E676 100%); }
+    .kpi-card.negative::before { background: linear-gradient(90deg, var(--danger) 0%, #FF5252 100%); }
+    .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple) 0%, #A855F7 100%); }
+    .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+    
+    .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .kpi-title { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .kpi-icon.green { background: var(--secondary-light); color: var(--secondary); }
+    .kpi-icon.blue { background: var(--primary-light); color: var(--primary); }
+    .kpi-icon.orange { background: var(--accent-light); color: var(--accent); }
+    .kpi-icon.purple { background: var(--purple-light); color: var(--purple); }
+    .kpi-icon.red { background: var(--danger-light); color: var(--danger); }
+    
+    .kpi-value { font-size: 32px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -1px; }
+    .kpi-change { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
+    .kpi-change.positive { color: var(--secondary); }
+    .kpi-change.negative { color: var(--danger); }
+    .kpi-change.neutral { color: var(--text-tertiary); }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-light);
+    }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .section-badge { background: var(--primary-light); color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    
+    .chart-wrapper { position: relative; height: 380px; }
+    .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    
+    /* Tables */
+    .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 16px; text-align: left; font-weight: 700; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg); border-bottom: 2px solid var(--border); }
+    td { padding: 16px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); font-weight: 500; }
+    tr:hover { background: var(--bg); }
+    tr:last-child td { border-bottom: none; }
+    
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-success { background: var(--secondary-light); color: var(--secondary); }
+    .badge-warning { background: var(--accent-light); color: var(--accent); }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+    .badge-neutral { background: var(--bg); color: var(--text-tertiary); }
+    .badge-purple { background: var(--purple-light); color: var(--purple); }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    
+    .info-footer { margin-top: 28px; padding: 24px; background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%); border-radius: var(--radius-lg); border: 1px solid var(--border); }
+    .info-footer h4 { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .info-footer p { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+    
+    .empty-state { text-align: center; padding: 60px 40px; color: var(--text-tertiary); }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+    /* Responsive */
+    @media (max-width: 1200px) { 
+      .chart-grid { grid-template-columns: 1fr; } 
+      .grid-2 { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) { 
+      .kpi-grid { grid-template-columns: 1fr; } 
+      .filter-section { flex-direction: column; align-items: stretch; }
+      .dropdown-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; }
+      .toggle-wrapper { margin-left: 0; margin-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-logo">🥤</div>
+        <div class="brand-text">
+          <h1>Hector Beverages</h1>
+          <span>Revenue Performance Dashboard</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <button class="theme-btn" onclick="toggleTheme()">
+          <i class="fas fa-moon"></i>
+          <span id="themeText">Dark</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <!-- hidden JSON containers for chart data -->
+  <script id="trend-data" type="application/json">{{ trend_labels_json | safe }}</script>
+  <script id="trend-values" type="application/json">{{ trend_values_json | safe }}</script>
+  <script id="yoy-data-json" type="application/json">{{ yoy_data_json | safe }}</script>
+  <!-- hidden flags for script logic -->
+  <input type="hidden" id="hasKpisInput" value="{{ 1 if kpis else 0 }}">
+  <input type="hidden" id="showYoyInput" value="{{ 1 if compare_yoy and yoy_data_json != 'null' else 0 }}">
+
+  <div class="filter-bar">
+    <div class="filter-bar-content">
+      <form method="get" action="/" id="dashboard-form">
+        <input type="hidden" name="years" id="yearsInput" value="{{ selected_years|join(',') if selected_years else '' }}">
+        <input type="hidden" name="time_grain" id="timeGrainInput" value="{{ time_grain }}">
+        <input type="hidden" name="compare_yoy" id="compareYoyInput" value="{{ 'true' if compare_yoy else 'false' }}">
+        <input type="hidden" name="auto_apply" id="autoApplyInput" value="{{ 'true' if auto_apply else 'false' }}">
+        
+        <!-- Row 1: Time & Year Filters -->
+        <div class="filter-section">
+          <span class="filter-label">Time:</span>
+          
+          <!-- Year Selector -->
+          <div class="filter-dropdown">
+            <button type="button" class="filter-btn" onclick="toggleDropdown('yearDropdown')">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Years {% if selected_years %}({{ selected_years|length }}){% endif %}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content wide" id="yearDropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fas fa-calendar"></i> Select Years</span>
+                <button type="button" class="dropdown-close" onclick="closeDropdown('yearDropdown')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="dropdown-actions">
+                <button type="button" class="action-btn" onclick="selectAllYears()">All Years</button>
+                <button type="button" class="action-btn" onclick="clearAllYears()">Clear</button>
+              </div>
+              <div class="year-chips" id="yearChips">
+                {% for year in available_years %}
+                <div class="year-chip {% if year in selected_years %}active{% endif %}" 
+                     onclick="toggleYear('{{ year }}')" 
+                     data-year="{{ year }}">
+                  {{ year }}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="filter-dropdown">
+            <button type="button" class="filter-btn" onclick="toggleDropdown('dateDropdown')">
+              <i class="fas fa-clock"></i>
+              <span>Date Range</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content" id="dateDropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fas fa-clock"></i> Date Range</span>
+                <button type="button" class="dropdown-close" onclick="closeDropdown('dateDropdown')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">Start Date</label>
+                  <input type="date" name="start_date" value="{{ start_date }}" min="{{ min_date }}" max="{{ max_date }}" class="dropdown-input" onchange="onFilterChange()">
+                </div>
+                <div>
+                  <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">End Date</label>
+                  <input type="date" name="end_date" value="{{ end_date }}" min="{{ min_date }}" max="{{ max_date }}" class="dropdown-input" onchange="onFilterChange()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Grain -->
+          <div class="filter-dropdown">
+            <button type="button" class="filter-btn" onclick="toggleDropdown('grainDropdown')">
+              <i class="fas fa-chart-bar"></i>
+              <span>View: {{ time_grain|title }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content" id="grainDropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fas fa-chart-bar"></i> Time Granularity</span>
+                <button type="button" class="dropdown-close" onclick="closeDropdown('grainDropdown')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="grain-options">
+                <div class="grain-option {% if time_grain == 'daily' %}active{% endif %}" onclick="setTimeGrain('daily', this)">
+                  <i class="fas fa-calendar-day"></i> Daily
+                </div>
+                <div class="grain-option {% if time_grain == 'weekly' %}active{% endif %}" onclick="setTimeGrain('weekly', this)">
+                  <i class="fas fa-calendar-week"></i> Weekly
+                </div>
+                <div class="grain-option {% if time_grain == 'monthly' %}active{% endif %}" onclick="setTimeGrain('monthly', this)">
+                  <i class="fas fa-calendar-alt"></i> Monthly
+                </div>
+                <div class="grain-option {% if time_grain == 'quarterly' %}active{% endif %}" onclick="setTimeGrain('quarterly', this)">
+                  <i class="fas fa-chart-pie"></i> Quarterly
+                </div>
+                <div class="grain-option {% if time_grain == 'yearly' %}active{% endif %}" onclick="setTimeGrain('yearly', this)">
+                  <i class="fas fa-calendar"></i> Yearly
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- YoY Toggle -->
+          <div class="toggle-wrapper">
+            <span class="toggle-label">YoY Compare</span>
+            <div class="toggle {% if compare_yoy %}active{% endif %}" onclick="toggleYoy()" id="yoyToggle"></div>
+          </div>
+        </div>
+
+        <!-- Row 2: Grouping & Dimensions -->
+        <div class="filter-section">
+          <span class="filter-label">Group:</span>
+          
+          <!-- Group By -->
+          <div class="filter-dropdown">
+            <button type="button" class="filter-btn" onclick="toggleDropdown('groupDropdown')">
+              <i class="fas fa-layer-group"></i>
+              <span>Group By{% if group_by1 %} ({{ 1 + (1 if group_by2 else 0) }}){% endif %}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content" id="groupDropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fas fa-layer-group"></i> Grouping Levels</span>
+                <button type="button" class="dropdown-close" onclick="closeDropdown('groupDropdown')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">Level 1</label>
+                  <select name="group_by1" class="dropdown-select" onchange="onFilterChange()">
+                    <option value="">-- None --</option>
+                    {% for col in dimension_cols %}
+                    <option value="{{ col }}" {% if group_by1 == col %}selected{% endif %}>{{ col }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">Level 2</label>
+                  <select name="group_by2" class="dropdown-select" onchange="onFilterChange()">
+                    <option value="">-- None --</option>
+                    {% for col in dimension_cols %}
+                    <option value="{{ col }}" {% if group_by2 == col %}selected{% endif %}>{{ col }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimension Filters -->
+          {% if dimensions_meta %}
+          <div class="filter-dropdown">
+            <button type="button" class="filter-btn" onclick="toggleDropdown('dimDropdown')">
+              <i class="fas fa-filter"></i>
+              <span>Filters ({{ dimensions_meta|length }})</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content wide" id="dimDropdown">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fas fa-filter"></i> Dimension Filters</span>
+                <button type="button" class="dropdown-close" onclick="closeDropdown('dimDropdown')">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 18px;">
+                {% for dim in dimensions_meta %}
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-size: 13px; font-weight: 700; color: var(--text-primary);">{{ dim.col }}</label>
+                    <div style="display: flex; gap: 6px;">
+                      <button type="button" class="action-btn" onclick="selectAll('{{ dim.param_key }}')" style="padding: 4px 10px; font-size: 11px;">All</button>
+                      <button type="button" class="action-btn" onclick="selectNone('{{ dim.param_key }}')" style="padding: 4px 10px; font-size: 11px;">None</button>
+                    </div>
+                  </div>
+                  <select id="{{ dim.param_key }}" name="{{ dim.param_key }}" class="dropdown-select" multiple onchange="onFilterChange()">
+                    {% for val in dim.dim_values %}
+                    <option value="{{ val }}" {% if val in dim.selected_values %}selected{% endif %}>{{ val }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Auto-apply -->
+          <div class="toggle-wrapper" style="margin-left: auto;">
+            <span class="toggle-label">Auto-apply</span>
+            <div class="toggle {% if auto_apply %}active{% endif %}" onclick="toggleAutoApply()" id="autoApplyToggle"></div>
+          </div>
+
+          <!-- Clear -->
+          <button type="button" class="clear-btn" onclick="clearAllFilters()">
+            <i class="fas fa-trash-alt"></i>
+            Clear
+          </button>
+
+          <!-- Apply -->
+          <button type="submit" class="apply-btn">
+            <i class="fas fa-play"></i>
+            Apply
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    {% if error_message %}
+      <div class="section-card">
+        <div class="empty-state">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>{{ error_message }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if kpis %}
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card positive">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Revenue</span>
+            <div class="kpi-icon green"><i class="fas fa-rupee-sign"></i></div>
+          </div>
+          <div class="kpi-value">{{ kpis.revenue_latest }}</div>
+          <div class="kpi-change {% if '+' in kpis.revenue_growth %}positive{% elif '-' in kpis.revenue_growth %}negative{% else %}neutral{% endif %}">
+            <i class="fas fa-{% if '+' in kpis.revenue_growth %}arrow-up{% elif '-' in kpis.revenue_growth %}arrow-down{% else %}minus{% endif %}"></i>
+            {{ kpis.revenue_growth }} vs prev
+          </div>
+        </div>
+
+        <div class="kpi-card {% if '+' in kpis.quantity_growth %}positive{% elif '-' in kpis.quantity_growth %}negative{% endif %}">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Volume</span>
+            <div class="kpi-icon blue"><i class="fas fa-boxes"></i></div>
+          </div>
+          <div class="kpi-value">{{ kpis.quantity_latest }}</div>
+          <div class="kpi-change {% if '+' in kpis.quantity_growth %}positive{% elif '-' in kpis.quantity_growth %}negative{% else %}neutral{% endif %}">
+            <i class="fas fa-{% if '+' in kpis.quantity_growth %}arrow-up{% elif '-' in kpis.quantity_growth %}arrow-down{% else %}minus{% endif %}"></i>
+            {{ kpis.quantity_growth }} vs prev
+          </div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-header">
+            <span class="kpi-title">Avg Price/Case</span>
+            <div class="kpi-icon purple"><i class="fas fa-tag"></i></div>
+          </div>
+          <div class="kpi-value">{{ kpis.avg_price }}</div>
+          <div class="kpi-change neutral">
+            <i class="fas fa-chart-line"></i> {{ kpis.total_txns }} transactions
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Current Period</span>
+            <div class="kpi-icon orange"><i class="fas fa-calendar-check"></i></div>
+          </div>
+          <div class="kpi-value" style="font-size: 24px;">{{ kpis.latest_period_label }}</div>
+          <div class="kpi-change neutral">
+            <i class="fas fa-clock"></i> Latest data
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="chart-grid">
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-chart-area" style="color: var(--primary);"></i> Revenue Trend</h3>
+            <span class="section-badge">{{ time_grain|title }} View</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="revenueTrend"></canvas>
+          </div>
+        </div>
+
+        {% if compare_yoy and yoy_data_json != "null" %}
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-chart-bar" style="color: var(--purple);"></i> Year Comparison</h3>
+            <span class="section-badge">YoY</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="yoyChart"></canvas>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Growth Breakdown -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title"><i class="fas fa-table" style="color: var(--secondary);"></i> Growth Breakdown</h3>
+          <span class="section-badge">{{ kpis.latest_period_label }}</span>
+        </div>
+        {% if breakdown_rows %}
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  {% for h in breakdown_headers %}
+                  <th>{{ h }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in breakdown_rows %}
+                <tr>
+                  {% for h in breakdown_headers %}
+                    {% if h == "PerformanceBucket" %}
+                      <td>
+                        {% if row[h] == "Strong Growth" %}
+                          <span class="badge badge-success"><i class="fas fa-rocket"></i> {{ row[h] }}</span>
+                        {% elif row[h] == "Moderate Growth" %}
+                          <span class="badge badge-warning"><i class="fas fa-chart-line"></i> {{ row[h] }}</span>
+                        {% elif row[h] == "Significant Decline" %}
+                          <span class="badge badge-danger"><i class="fas fa-chart-down"></i> {{ row[h] }}</span>
+                        {% else %}
+                          <span class="badge badge-neutral"><i class="fas fa-minus"></i> {{ row[h] }}</span>
+                        {% endif %}
+                      </td>
+                    {% else %}
+                      <td>{{ row[h] }}</td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>No breakdown data available</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Two Column Layout -->
+      <div class="grid-2">
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-rocket" style="color: var(--success);"></i> Strong Growth Segments</h3>
+          </div>
+          {% if strong_rows %}
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>{% for h in breakdown_headers %}<th>{{ h }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                  {% for row in strong_rows %}
+                  <tr>
+                    {% for h in breakdown_headers %}
+                      {% if h == "PerformanceBucket" %}
+                        <td><span class="badge badge-success"><i class="fas fa-rocket"></i> {{ row[h] }}</span></td>
+                      {% else %}
+                        <td>{{ row[h] }}</td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state"><i class="fas fa-check-circle"></i><p>No strong growth segments found</p></div>
+          {% endif %}
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> Significant Declines</h3>
+          </div>
+          {% if decline_rows %}
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>{% for h in breakdown_headers %}<th>{{ h }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                  {% for row in decline_rows %}
+                  <tr>
+                    {% for h in breakdown_headers %}
+                      {% if h == "PerformanceBucket" %}
+                        <td><span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> {{ row[h] }}</span></td>
+                      {% else %}
+                        <td>{{ row[h] }}</td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state"><i class="fas fa-check-circle"></i><p>No significant declines found</p></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Info Footer -->
+      <div class="info-footer">
+        <h4><i class="fas fa-info-circle"></i> Metric Definitions & Performance Buckets</h4>
+        <p>
+          <strong>Revenue Growth %</strong> = (Current Period - Previous Period) / Previous Period × 100<br>
+          <span class="badge badge-success">Strong Growth</span> (≥10% & ≥₹500K) | 
+          <span class="badge badge-warning">Moderate Growth</span> (≥3% & ≥₹100K) | 
+          <span class="badge badge-danger">Significant Decline</span> (≤-3% & ≥₹100K) | 
+          <span class="badge badge-neutral">Minor/Noise</span> (everything else)
+        </p>
+      </div>
+    {% else %}
+      <div class="section-card">
+        <div class="empty-state">
+          <i class="fas fa-filter"></i>
+          <p>Select filters and click Apply to view the dashboard</p>
+        </div>
+      </div>
+    {% endif %}
+  </main>
+
+  <script>
+    // disable TypeScript/JS validation inside this template (many Jinja expressions)
+    // @ts-nocheck
+    // prepare a couple of flags from hidden inputs
+    const HAS_KPIS = document.getElementById('hasKpisInput').value === '1';
+    const SHOW_YOY = document.getElementById('showYoyInput').value === '1';
+    // Dropdown Functions
+    function toggleDropdown(id) {
+      const dropdown = document.getElementById(id);
+      const isOpen = dropdown.classList.contains('show');
+      
+      // Close all dropdowns
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      
+      // Open clicked if it was closed
+      if (!isOpen) {
+        dropdown.classList.add('show');
+        dropdown.previousElementSibling.classList.add('active');
+      }
+    }
+
+    function closeDropdown(id) {
+      document.getElementById(id).classList.remove('show');
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      }
+    });
+
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const newTheme = current === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      document.getElementById('themeText').textContent = newTheme === 'light' ? 'Dark' : 'Light';
+      document.querySelector('.theme-btn i').className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    // Year Selection
+    function toggleYear(year) {
+      const chip = document.querySelector(`[data-year="${year}"]`);
+      chip.classList.toggle('active');
+      updateYearsInput();
+      onFilterChange();
+    }
+
+    function selectAllYears() {
+      document.querySelectorAll('.year-chip').forEach(chip => chip.classList.add('active'));
+      updateYearsInput();
+      onFilterChange();
+    }
+
+    function clearAllYears() {
+      document.querySelectorAll('.year-chip').forEach(chip => chip.classList.remove('active'));
+      updateYearsInput();
+      onFilterChange();
+    }
+
+    function updateYearsInput() {
+      const selected = Array.from(document.querySelectorAll('.year-chip.active')).map(c => c.dataset.year);
+      document.getElementById('yearsInput').value = selected.join(',');
+    }
+
+    // Time Grain
+    function setTimeGrain(grain, el) {
+      document.getElementById('timeGrainInput').value = grain;
+      document.querySelectorAll('.grain-option').forEach(o => o.classList.remove('active'));
+      if (el && el.closest) el.closest('.grain-option').classList.add('active');
+      onFilterChange();
+    }
+
+    // YoY Toggle
+    function toggleYoy() {
+      const toggle = document.getElementById('yoyToggle');
+      const input = document.getElementById('compareYoyInput');
+      const isActive = toggle.classList.toggle('active');
+      input.value = isActive ? 'true' : 'false';
+      onFilterChange();
+    }
+
+    // Auto-apply
+    function toggleAutoApply() {
+      const toggle = document.getElementById('autoApplyToggle');
+      const input = document.getElementById('autoApplyInput');
+      const isActive = toggle.classList.toggle('active');
+      input.value = isActive ? 'true' : 'false';
+    }
+
+    function onFilterChange() {
+      if (document.getElementById('autoApplyInput').value === 'true') {
+        document.getElementById('dashboard-form').submit();
+      }
+    }
+
+    // Select All/None for dimensions
+    function selectAll(id) {
+      const select = document.getElementById(id);
+      for (let opt of select.options) opt.selected = true;
+      onFilterChange();
+    }
+
+    function selectNone(id) {
+      const select = document.getElementById(id);
+      for (let opt of select.options) opt.selected = false;
+      onFilterChange();
+    }
+
+    // Clear Filters
+    function clearAllFilters() {
+      window.location.href = '/?clear_filters=true';
+    }
+
+    // Charts
+    if (HAS_KPIS) {
+      // Revenue Trend Chart
+      const trendLabels = JSON.parse(document.getElementById('trend-data').textContent || '[]');
+      const trendValues = JSON.parse(document.getElementById('trend-values').textContent || '[]');
+      const trendCtx = document.getElementById("revenueTrend").getContext("2d");
+    const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, "rgba(0, 102, 255, 0.3)");
+    gradient.addColorStop(1, "rgba(0, 102, 255, 0.0)");
+
+    new Chart(trendCtx, {
+      type: "line",
+      data: {
+        labels: trendLabels,
+        datasets: [{
+          label: "Revenue (INR)",
+          data: trendValues,
+          borderColor: "#0066FF",
+          backgroundColor: gradient,
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: "#0066FF",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 12,
+            callbacks: {
+              label: function(context) {
+                return "Revenue: ₹" + context.parsed.y.toLocaleString();
+              }
+            }
+          },
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(100, 116, 139, 0.1)' },
+            ticks: {
+              callback: function(value) {
+                return "₹" + (value / 1000000).toFixed(1) + "M";
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // YoY Comparison Chart
+    if (SHOW_YOY) {
+      const yoyData = JSON.parse(document.getElementById('yoy-data-json').textContent || 'null');
+      const yoyCtx = document.getElementById("yoyChart").getContext("2d");
+      
+      const yoyDatasets = yoyData.years.map((year, idx) => ({
+      label: year.toString(),
+      data: yoyData.values[year],
+      backgroundColor: idx === 0 ? 'rgba(0, 102, 255, 0.7)' : 'rgba(124, 58, 237, 0.7)',
+      borderColor: idx === 0 ? '#0066FF' : '#7C3AED',
+      borderWidth: 2,
+    }));
+
+    new Chart(yoyCtx, {
+      type: "bar",
+      data: {
+        labels: yoyData.periods,
+        datasets: yoyDatasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ": ₹" + context.parsed.y.toLocaleString();
+              }
+            }
+          },
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(100, 116, 139, 0.1)' },
+            ticks: {
+              callback: function(value) {
+                return "₹" + (value / 1000000).toFixed(1) + "M";
+              },
+            },
+          },
+        },
+      },
+    });
+    } // end SHOW_YOY
+  } // end HAS_KPIS
+  </script>
+</body>
+</html>
