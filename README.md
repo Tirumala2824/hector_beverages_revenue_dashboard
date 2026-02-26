@@ -402,15 +402,7 @@ Use these to focus leadership on **material** movers.
 
 ---
 
-## 7. 1‑Pager Insight Summary
 
-Use `INSIGHTS_TEMPLATE.md` after exploring the dashboard to write a **leadership-ready 1‑pager**:
-
-- Headline performance for the latest month.
-- Top growth drivers (regions, channels, categories, SKUs).
-- Areas of concern / decline that require action.
-- Mix/price vs volume commentary.
-- Recommended actions and suggestions for dashboard/data iteration.
 
 The template is structured to guide you to 3–5 actionable observations and next steps.
 
