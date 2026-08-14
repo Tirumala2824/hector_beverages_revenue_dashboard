@@ -1,16 +1,14 @@
 from datetime import date
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import json
 
-import numpy as np
-import pandas as pd
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from app.analytics import aggregate_data, format_inr, format_pct, get_time_grain_column, identify_dimensions, load_sales_data
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -22,143 +20,6 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-
-@lru_cache()
-def load_sales_data() -> pd.DataFrame:
-    """
-    Load the transactional sales data and derive standard time attributes.
-    """
-    if not DATA_PATH.exists():
-        raise FileNotFoundError(f"Data file not found at {DATA_PATH}")
-
-    df = pd.read_csv(DATA_PATH)
-
-    required_cols = {"Posting Date", "Amount", "Quantity"}
-    missing = required_cols - set(df.columns)
-    if missing:
-        raise ValueError(f"CSV is missing required columns: {', '.join(sorted(missing))}")
-
-    df["Posting Date"] = pd.to_datetime(df["Posting Date"], errors="coerce")
-    df = df.dropna(subset=["Posting Date"])
-    
-    # Extract time dimensions for multi-year analysis
-    df["Year"] = df["Posting Date"].dt.year
-    df["Month"] = df["Posting Date"].dt.month
-    df["Quarter"] = df["Posting Date"].dt.quarter
-    df["YearMonth"] = df["Posting Date"].dt.to_period("M").astype(str)
-    df["YearQuarter"] = df["Posting Date"].dt.to_period("Q").astype(str)
-    df["Week"] = df["Posting Date"].dt.isocalendar().week
-
-    return df
-
-
-def identify_dimensions(df: pd.DataFrame) -> List[str]:
-    """
-    Identify candidate dimension / hierarchy fields automatically.
-    """
-    exclude_cols = {"Posting Date", "Year", "Month", "Quarter", "YearMonth", "YearQuarter", "Week"}
-    measure_cols = {"Amount", "Quantity"}
-
-    dims: List[str] = []
-    for col in df.columns:
-        if col in exclude_cols or col in measure_cols:
-            continue
-        if pd.api.types.is_numeric_dtype(df[col]):
-            continue
-        dims.append(col)
-    return dims
-
-
-def format_inr(value: float) -> str:
-    """Format number as INR currency."""
-    if pd.isna(value) or value is None:
-        return "₹0"
-    abs_val = abs(value)
-    if abs_val >= 1_00_00_000:  # Crore
-        return f"₹{value/1_00_00_000:.2f}Cr"
-    elif abs_val >= 1_00_000:  # Lakh
-        return f"₹{value/1_00_000:.2f}L"
-    elif abs_val >= 1_000:  # Thousand
-        return f"₹{value/1_000:.2f}K"
-    else:
-        return f"₹{value:,.0f}"
-
-
-def format_pct(value: float) -> str:
-    """Format percentage."""
-    if pd.isna(value) or value is None:
-        return "–"
-    return f"{value:+.1f}%"
-
-
-def get_time_grain_column(df: pd.DataFrame, time_grain: str) -> str:
-    """Get the appropriate time column based on grain."""
-    grain_map = {
-        "daily": "Posting Date",
-        "weekly": "Week",
-        "monthly": "YearMonth",
-        "quarterly": "YearQuarter",
-        "yearly": "Year"
-    }
-    return grain_map.get(time_grain, "YearMonth")
-
-
-def aggregate_data(df: pd.DataFrame, group_cols: List[str], time_grain: str = "monthly") -> pd.DataFrame:
-    """
-    Aggregate data based on time grain and grouping columns.
-    """
-    time_col = get_time_grain_column(df, time_grain)
-    
-    agg_cols = [time_col] + group_cols if group_cols else [time_col]
-    
-    agg_df = (
-        df.groupby(agg_cols)
-        .agg(
-            Revenue=("Amount", "sum"),
-            Quantity=("Quantity", "sum"),
-            TxnCount=("Amount", "count"),
-        )
-        .reset_index()
-    )
-    
-    agg_df["AvgOrderValue"] = agg_df["Revenue"] / agg_df["TxnCount"]
-    agg_df["AvgPricePerCase"] = agg_df["Revenue"] / agg_df["Quantity"].replace(0, np.nan)
-    
-    # Sort by time
-    agg_df = agg_df.sort_values(by=[time_col] + group_cols)
-    
-    # Calculate period-over-period growth for revenue and quantity
-    if group_cols:
-        agg_df["RevenuePrevPeriod"] = agg_df.groupby(group_cols)["Revenue"].shift(1)
-        agg_df["QuantityPrevPeriod"] = agg_df.groupby(group_cols)["Quantity"].shift(1)
-    else:
-        agg_df["RevenuePrevPeriod"] = agg_df["Revenue"].shift(1)
-        agg_df["QuantityPrevPeriod"] = agg_df["Quantity"].shift(1)
-    
-    agg_df["RevenueGrowthAbs"] = agg_df["Revenue"] - agg_df["RevenuePrevPeriod"]
-    agg_df["RevenueGrowthPct"] = (agg_df["RevenueGrowthAbs"] / agg_df["RevenuePrevPeriod"].replace(0, np.nan)) * 100
-    # Quantity growth for display in KPIs may be computed later as needed
-    
-    # Performance bucketing
-    def bucket_performance(row):
-        pct = row["RevenueGrowthPct"]
-        abs_change = abs(row["RevenueGrowthAbs"])
-        
-        if pd.isna(pct):
-            return "New/No Data"
-        if pct >= 10 and abs_change >= 500000:
-            return "Strong Growth"
-        elif pct >= 3 and abs_change >= 100000:
-            return "Moderate Growth"
-        elif pct <= -3 and abs_change >= 100000:
-            return "Significant Decline"
-        else:
-            return "Minor/Noise"
-    
-    agg_df["PerformanceBucket"] = agg_df.apply(bucket_performance, axis=1)
-    
-    return agg_df
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -176,7 +37,7 @@ async def dashboard(
 ):
 
     # Load data
-    df = load_sales_data()
+    df = load_sales_data(str(DATA_PATH))
     
     # Get available years from data
     available_years = sorted(df["Year"].unique().tolist(), reverse=True)
@@ -274,9 +135,9 @@ async def dashboard(
     
     # Determine grouping columns
     group_cols = []
-    if group_by1:
+    if group_by1 and group_by1 in dimension_cols:
         group_cols.append(group_by1)
-    if group_by2 and group_by2 != group_by1:
+    if group_by2 and group_by2 in dimension_cols and group_by2 != group_by1:
         group_cols.append(group_by2)
     
     # Aggregate data
