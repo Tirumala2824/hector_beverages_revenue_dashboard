@@ -415,3 +415,10 @@ However, the **FastAPI + Jinja2** implementation is the primary answer to the re
 > “in python only look like powerbi dashboard id need use the fastapi and template”
 
 and should be used as the main deliverable.
+
+## Project governance
+
+- Contributions: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Security reports: [`SECURITY.md`](SECURITY.md)
+- License: [`LICENSE`](LICENSE)
+- Change history: [`CHANGELOG.md`](CHANGELOG.md)
