@@ -1,27 +1,26 @@
-# Architecture and project structure
+# Architecture
 
-## Scope
+## System boundary
 
-This document records the repository boundaries and the locations that maintainers should inspect first. It is a baseline and should be refined as the project architecture becomes clearer.
+This repository is a server-rendered FastAPI analytics application. It loads a versioned CSV data artifact, applies validated dashboard filters, computes analytical view models, and renders a Jinja2 dashboard. It does not own data collection, database persistence, authentication, or model training.
 
-## Top-level entries
+## Layers
 
-- `.gitignore`
-- `README.md`
-- `data`
-- `main.py`
-- `requirements.txt`
-- `static`
-- `templates`
+```text
+HTTP request
+    -> app.main (composition root and route adapter)
+    -> app.dashboard_service (query validation, filtering, KPI/view-model orchestration)
+    -> app.analytics (data loading, normalization, aggregation primitives)
+    -> data/Sales Data For Data Analyst Role (1).csv
+    -> Jinja2 template + static assets
+```
 
-## Responsibilities
+`app.config.Settings` owns environment-driven paths and runtime configuration. `app.dashboard_service.DashboardService` owns application use cases and is testable with an in-memory DataFrame. `app.analytics` contains reusable, side-effect-light analytical primitives. The template layer receives a prepared view model and should not perform data access.
 
-Document the main application, data, UI, integration, and persistence boundaries here. Keep external services and trust boundaries explicit.
+## Design decisions
 
-## Data and dependency flow
-
-Describe inputs, transformations, storage, outputs, background jobs, and external APIs. State where validation, authentication, authorization, retries, and error handling occur.
-
-## Maintainability notes
-
-Prefer small modules with explicit interfaces. Keep tests close to the behavior they protect and keep generated or local-only files out of version control.
+- The application uses dependency injection for settings and the data frame so tests do not require the production CSV.
+- Data normalization and aggregation are separated from HTTP concerns.
+- Invalid dates and years are rejected with a user-visible error instead of producing a server traceback.
+- Unknown grouping fields are ignored at the request boundary rather than used as arbitrary DataFrame keys.
+- The static directory is mounted without mutating the repository during import.

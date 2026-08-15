@@ -1,18 +1,23 @@
-# Deployment and production usage
+# Deployment
 
-## Current status
+## Local
 
-This repository was detected as **Python**. Confirm the target hosting platform, supported runtime, build command, start command, and required environment variables before production use.
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-## Deployment checklist
+## Configuration
 
-1. Pin the supported runtime and dependency versions.
-2. Configure secrets through the deployment provider or GitHub environments; do not commit them.
-3. Run migrations or initialization steps explicitly and back up data before changes.
-4. Run tests and a smoke test against a non-production environment.
-5. Configure logs, health checks, monitoring, and an owner for incidents.
-6. Document rollback steps and the last known good release.
+`DASHBOARD_DATA_PATH` points to the CSV data artifact. `DASHBOARD_HOST` and `DASHBOARD_PORT` control the local/server bind. In production, place the data artifact in managed storage or mount it read-only; do not upload sensitive sales data to public repositories.
 
-## Production configuration
+## Validation
 
-Document required environment variables, databases, queues, storage, third-party services, domains, CORS, authentication, rate limits, and data-retention requirements here.
+Run `ruff check .`, `python -m compileall -q app tests main.py`, and `pytest`. Before deployment, verify the health of the data artifact, date range, expected columns, static assets, and rendered dashboard.
+
+## Production caveats
+
+The current application is a read-only analytics dashboard backed by a CSV file. It is not yet a multi-user or high-concurrency service. A production expansion should add authentication, data versioning, refresh orchestration, observability, cache strategy, and a durable analytical store before claiming enterprise readiness.
