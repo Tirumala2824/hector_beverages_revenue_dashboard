@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -17,9 +17,11 @@ class Settings:
     port: int = 8000
 
     @classmethod
-    def from_environment(cls, base_dir: Path | None = None) -> "Settings":
+    def from_environment(cls, base_dir: Path | None = None) -> Settings:
         root = (base_dir or Path(__file__).resolve().parents[1]).resolve()
-        configured_data = Path(os.getenv("DASHBOARD_DATA_PATH", "data/Sales Data For Data Analyst Role (1).csv"))
+        configured_data = Path(
+            os.getenv("DASHBOARD_DATA_PATH", "data/Sales Data For Data Analyst Role (1).csv")
+        )
         data_path = configured_data if configured_data.is_absolute() else root / configured_data
         return cls(
             base_dir=root,
