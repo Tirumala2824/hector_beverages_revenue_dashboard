@@ -8,4 +8,4 @@ numpy>=1.26,<3
 
 # Development and quality dependencies
 pytest>=8,<9
-ruff>=0.6,<1
+ruff>=0.16.2,<1
