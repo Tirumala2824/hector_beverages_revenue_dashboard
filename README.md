@@ -2,7 +2,7 @@
 
 A FastAPI and pandas dashboard for exploring beverage sales performance across time periods and business dimensions. The project turns a CSV sales artifact into a server-rendered analytical experience with revenue, quantity, transaction, growth, trend, year-over-year, and segment-performance views.
 
-[![CI](https://github.com/Tirumala2824/hector_beverages_revenue_dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Tirumala2824/hector_beverages_revenue_dashboard/actions/workflows/ci.yml)
+[![CI](https://github.com/Tirumala2824/revenue_dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Tirumala2824/revenue_dashboard/actions/workflows/ci.yml)
 
 ## Why this project exists
 
